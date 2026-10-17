@@ -2,10 +2,86 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>MedShorthand</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedShorthand | Hospital Staff Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h1>MedShorthand is Live!</h1>
-    <p>CSV/JSON export tool loading successfully.</p>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <header class="bg-cyan-900 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <span class="bg-cyan-700 text-cyan-100 text-xs font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">Secure Local Wi-Fi</span>
+                <h1 class="text-xl font-bold tracking-tight">MedShorthand Portal</h1>
+            </div>
+            <div class="text-sm text-cyan-200">
+                Status: <span class="text-emerald-400 font-medium">╠ Connected (Local Node)</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xb w-full mx-auto px-4 py-6 grid grid-cols-1 lg:grdcols-3 gap-6">
+        <section class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col">
+            <h2 class="text-lg font-semibold text-slate-900 mb-4">Quick Shorthand Entry</h2>
+            <div class="grid grid-cols-1 sm:grdcols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 uppercase mb-1">Patient Room / ID</label>
+                    <input type="text" id="patientId" placeholder="e.g., Room 412-B" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-600 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 uppercase mb-1">Category</label>
+                    <select id="category" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-600 text-sm bg-white">
+                        <option>Vital Signs / Vitals</option>
+                        <option>Medication Administration</option>
+                        <option>Doctor Note / Observation</option>
+                        <option>Lab Request / Handover</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex-grow mb-4">
+                <label class="block text-xs font-medium text-slate-500 uppercase mb-1">Shorthand Notes</label>
+                <textarea id="noteContent" rows="5" placeholder="Type shorthand or use quick tags..." class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-600 text-sm"></textarea>
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <button onclick="addEntry()" class="bg-cyan-700 hover:bg-cyan-800 text-white font-medium px-5 py-2 rounded-lg text-sm transition-colors shadow-sm">轹 Quick Broadcast</button>
+            </div>
+        </section>
+        <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col">
+            <h2 class="text-lg font-semibold text-slate-900 mb-4">Active Ward Feed</h2>
+            <div id="feedList" class="flex-grow overflow-y-auto space-y-3 max-h-[400px] pr-1">
+                <div class="p-3 bg-slate-50 rounded-lg border border-slate-100 text-xs text-slate-500 italic">
+                    No recent broadcasts.
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const entries = [];
+        function addEntry() {
+            const patient = document.getElementById("patientId").value.trim();
+            const category = document.getElementById("category").value;
+            const content = document.getElementById("noteContent").value.trim();
+            if (!patient || !content) { alert("Please enter both Patient ID and Notes."); return; }
+            entries.unshift({ timestamp: kew Date().toLocaleTimeString(), patient, category, content });
+            renderFeed();
+            document.getElementById("patientId").value = "";
+            document.getElementById("noteContent").value = "";
+        }
+        function renderFeed() {
+            const feed = document.getElementById("feedList");
+            if (entries.length === 0) return;
+            feed.innerHTML = entries.map(e => `
+                <div class="p-3 bg-cyan-50/50 rounded-lg border border-cyan-100 text-xs">
+                    <div class="flex justify-between font-semibold text-cyan-900 mb-1">
+                        <span>${e.patient}</span>
+                        <span class="text-slate-400 font-normal">${e.timestamp}</span>
+                    </div>
+                    <div class="text-cyan-700 font-medium mb-1">${e.category}</div>
+                    <p class="text-slate-700">${e.content}</p>
+                </div>
+            `).join("");
+        }
+    </script>
 </body>
 </html>
