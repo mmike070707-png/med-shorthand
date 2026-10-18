@@ -42,11 +42,12 @@ export default function ChartingPage() {
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-slate-950 text-white relative overflow-hidden select-none">
+    <div className="flex flex-col min-h-screen bg-slate-950 text-white relative select-none">
       {!isAccepted && <TermsModal onAccept={handleAcceptTerms} />}
       <MacroEditor isOpen={isEditorOpen} onClose={() => setIsEditorOpen(false)} />
 
-      <div className="flex-1 p-3 flex flex-col overflow-y-auto">
+      {/* Main Content with bottom padding so text doesn't hide behind the fixed keyboard */}
+      <div className="flex-1 p-3 flex flex-col pb-[240px]">
         <div className="flex justify-between items-center mb-2">
           <h1 className="text-base font-bold">MedNote Active Chart</h1>
           <span className="text-[9px] bg-red-950 text-red-300 border border-red-800 px-2 py-0.5 rounded uppercase font-semibold">
@@ -54,14 +55,13 @@ export default function ChartingPage() {
           </span>
         </div>
         
-        {/* inputMode="none" completely suppresses the phone's native OS keyboard */}
         <textarea
           ref={textareaRef}
           inputMode="none"
           value={noteText}
           onChange={(e) => setNoteText(e.target.value)}
-          placeholder="Use custom shorthand keyboard below to record notes..."
-          className="w-full flex-1 p-3 bg-slate-900 border border-slate-800 rounded-lg text-slate-100 focus:outline-none focus:border-blue-500 resize-none shadow-inner text-sm"
+          placeholder="Tap here to type or use custom shorthand keyboard below..."
+          className="w-full flex-1 min-h-[250px] p-3 bg-slate-900 border border-slate-800 rounded-lg text-slate-100 focus:outline-none focus:border-blue-500 resize-none shadow-inner text-sm"
         />
       </div>
 
