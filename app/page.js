@@ -2,10 +2,12 @@
 import { useState, useEffect, useRef } from 'react';
 import MedShorthandKeyboard from '@/components/MedShorthandKeyboard';
 import TermsModal from '@/components/TermsModal';
+import MacroEditor from '@/components/MacroEditor';
 
 export default function ChartingPage() {
   const [noteText, setNoteText] = useState('');
   const [isAccepted, setIsAccepted] = useState(false);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const textareaRef = useRef(null);
 
   useEffect(() => {
@@ -33,7 +35,6 @@ export default function ChartingPage() {
     
     setNoteText(newText);
 
-    // Keep focus and restore cursor position after insertion
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(start + textToInsert.length, start + textToInsert.length);
@@ -43,6 +44,7 @@ export default function ChartingPage() {
   return (
     <div className="flex flex-col h-[100dvh] bg-slate-950 text-white relative overflow-hidden">
       {!isAccepted && <TermsModal onAccept={handleAcceptTerms} />}
+      <MacroEditor isOpen={isEditorOpen} onClose={() => setIsEditorOpen(false)} />
 
       <div className="flex-1 p-3 flex flex-col overflow-y-auto">
         <div className="flex justify-between items-center mb-2">
@@ -60,7 +62,10 @@ export default function ChartingPage() {
         />
       </div>
 
-      <MedShorthandKeyboard onInsertText={handleInsert} />
+      <MedShorthandKeyboard 
+        onInsertText={handleInsert} 
+        onOpenEditor={() => setIsEditorOpen(true)} 
+      />
     </div>
   );
 }
