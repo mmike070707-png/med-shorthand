@@ -29,8 +29,8 @@ export default function ChartingPage() {
       return;
     }
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
+    const start = textarea.selectionStart || noteText.length;
+    const end = textarea.selectionEnd || noteText.length;
     const newText = noteText.substring(0, start) + textToInsert + noteText.substring(end);
     
     setNoteText(newText);
@@ -42,7 +42,7 @@ export default function ChartingPage() {
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-slate-950 text-white relative overflow-hidden">
+    <div className="flex flex-col h-[100dvh] bg-slate-950 text-white relative overflow-hidden select-none">
       {!isAccepted && <TermsModal onAccept={handleAcceptTerms} />}
       <MacroEditor isOpen={isEditorOpen} onClose={() => setIsEditorOpen(false)} />
 
@@ -53,11 +53,14 @@ export default function ChartingPage() {
             HIPAA Firewall Active
           </span>
         </div>
+        
+        {/* inputMode="none" completely suppresses the phone's native OS keyboard */}
         <textarea
           ref={textareaRef}
+          inputMode="none"
           value={noteText}
           onChange={(e) => setNoteText(e.target.value)}
-          placeholder="Tap here to type or use shortcuts below..."
+          placeholder="Use custom shorthand keyboard below to record notes..."
           className="w-full flex-1 p-3 bg-slate-900 border border-slate-800 rounded-lg text-slate-100 focus:outline-none focus:border-blue-500 resize-none shadow-inner text-sm"
         />
       </div>
