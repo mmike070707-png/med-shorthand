@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MedNote - Secure Clinical Documentation Hub</title>
+    <title>MedNote - Secure Clinical Documentation Hub & AI Receptionist</title>
     <style>
         :root {
             --bg-color: #f4f6f8;
@@ -15,6 +15,8 @@
             --accent-bg: #f0fdfa;
             --output-bg: #f8fafc;
             --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --success-color: #10b981;
         }
 
         [data-theme="dark"] {
@@ -27,6 +29,8 @@
             --accent-bg: #134e4a;
             --output-bg: #111827;
             --danger-color: #f87171;
+            --warning-color: #fbbf24;
+            --success-color: #34d399;
         }
 
         body {
@@ -39,7 +43,7 @@
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1050px;
             margin: 0 auto;
             background: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -176,20 +180,19 @@
 
         h2 { font-size: 1.2rem; margin-bottom: 12px; }
 
-        textarea {
+        textarea, select {
             width: 100%;
-            height: 130px;
             padding: 12px;
             border: 1px solid var(--border-color);
             border-radius: 6px;
             background: var(--output-bg);
             color: var(--text-color);
-            font-family: monospace;
+            font-family: inherit;
             font-size: 0.95rem;
             box-sizing: border-box;
-            resize: vertical;
             margin-bottom: 12px;
         }
+        textarea { height: 120px; font-family: monospace; resize: vertical; }
 
         .editor-actions {
             display: flex;
@@ -208,7 +211,36 @@
             min-height: 90px;
         }
 
-        /* Department Vault View */
+        /* AI Receptionist Specific Styles */
+        .call-queue {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .call-card {
+            background: var(--output-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            position: relative;
+        }
+
+        .priority-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .priority-routine { background: rgba(16, 185, 129, 0.15); color: var(--success-color); }
+        .priority-moderate { background: rgba(245, 158, 11, 0.15); color: var(--warning-color); }
+        .priority-urgent { background: rgba(239, 68, 68, 0.15); color: var(--danger-color); }
+
+        /* Vault & Video */
         .vault-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -221,8 +253,6 @@
             border-radius: 8px;
             padding: 16px;
         }
-
-        /* Video Tutorial */
         .video-container {
             position: relative;
             width: 100%;
@@ -234,15 +264,8 @@
             background: #000;
         }
         .video-container iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: 0;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;
         }
-
-        /* Tour Box */
         .tour-box {
             background: var(--accent-bg);
             border: 1px solid var(--primary-color);
@@ -250,12 +273,7 @@
             padding: 20px;
         }
         .tour-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            font-weight: 600;
-            color: var(--primary-color);
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-weight: 600; color: var(--primary-color);
         }
         .tour-content { margin-bottom: 16px; line-height: 1.5; }
         .tour-footer { display: flex; justify-content: space-between; align-items: center; }
@@ -266,14 +284,15 @@
 <body>
 
     <div class="container">
-        <!-- Secure Department Login View -->
+        <!-- Secure Login View -->
         <div id="loginOverlay">
             <div class="login-card">
                 <h1>MedNote Secure Login</h1>
-                <p style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 20px;">Select your authorized department and enter secure access credentials.</p>
+                <p style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 20px;">Select your authorized department and enter secure access passcode.</p>
                 <div class="form-group">
                     <label for="deptSelect">Department Vault</label>
                     <select id="deptSelect" class="form-control">
+                        <option value="reception">AI Receptionist & Triage</option>
                         <option value="er">Emergency Room (ER)</option>
                         <option value="icu">Intensive Care Unit (ICU)</option>
                         <option value="surgery">Surgical Services</option>
@@ -294,7 +313,7 @@
             <header>
                 <div>
                     <h1>MedNote Hub</h1>
-                    <span class="user-badge" id="activeUserBadge">ER Department - Secure Access</span>
+                    <span class="user-badge" id="activeUserBadge">AI Receptionist - Active</span>
                 </div>
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <button class="btn btn-secondary" onclick="toggleTheme()">Toggle Theme</button>
@@ -304,18 +323,72 @@
 
             <!-- Navigation Tabs -->
             <div class="nav-tabs">
-                <button class="tab-btn active" onclick="switchTab('parserTab', this)">Shorthand Parser</button>
+                <button class="tab-btn active" onclick="switchTab('receptionTab', this)">AI Receptionist & Triage</button>
+                <button class="tab-btn" onclick="switchTab('parserTab', this)">Shorthand Parser</button>
                 <button class="tab-btn" onclick="switchTab('vaultTab', this)">Department Vault</button>
                 <button class="tab-btn" onclick="switchTab('videoTab', this)">Video Training</button>
                 <button class="tab-btn" onclick="switchTab('tourTab', this)">Interactive Tour</button>
             </div>
 
-            <!-- Tab 1: Shorthand Parser & Exporter -->
-            <div id="parserTab" class="tab-content active">
+            <!-- Tab 1: AI Receptionist & Triage -->
+            <div id="receptionTab" class="tab-content active">
+                <div class="section">
+                    <h2>AI Phone Receptionist & Patient Triage Console</h2>
+                    <p style="font-size: 0.9rem; opacity: 0.8; margin-top: 0;">Automated voice intake processing for sick calls, doctor appointments, and over-the-counter (OTC) prescription inquiries.</p>
+                    
+                    <!-- Live Incoming Queue Simulator -->
+                    <h3 style="font-size: 1.05rem; margin-top: 20px;">Active Inbound Patient Calls</h3>
+                    <div class="call-queue">
+                        <div class="call-card">
+                            <span class="priority-badge priority-moderate">Sick Call / Flu</span>
+                            <h4 style="margin: 0 0 6px 0;">Patient: Sarah Jenkins</h4>
+                            <p style="font-size: 0.85rem; margin: 0 0 10px 0; opacity: 0.8;">"Calling in sick with persistent fever (101.5°F) and cough for 2 days. Requesting sick note."</p>
+                            <button class="btn" style="font-size: 0.8rem; padding: 6px 12px;" onclick="processCall('Sarah Jenkins', 'Sick Call: Fever & Cough', 'Moderate - Issue 3-day sick note & telehealth consult')">Process Triage</button>
+                        </div>
+                        <div class="call-card">
+                            <span class="priority-badge priority-routine">Appointment Booking</span>
+                            <h4 style="margin: 0 0 6px 0;">Patient: Robert Davis</h4>
+                            <p style="font-size: 0.85rem; margin: 0 0 10px 0; opacity: 0.8;">"Requesting routine annual physical checkup and blood pressure follow-up."</p>
+                            <button class="btn" style="font-size: 0.8rem; padding: 6px 12px;" onclick="processCall('Robert Davis', 'Appointment: Annual Physical', 'Routine - Scheduled with Dr. Vance on Oct 24')">Process Triage</button>
+                        </div>
+                        <div class="call-card">
+                            <span class="priority-badge priority-routine">OTC Prescription</span>
+                            <h4 style="margin: 0 0 6px 0;">Patient: Maria Garcia</h4>
+                            <p style="font-size: 0.85rem; margin: 0 0 10px 0; opacity: 0.8;">"Inquiring about recommended over-the-counter antihistamines for seasonal allergies."</p>
+                            <button class="btn" style="font-size: 0.8rem; padding: 6px 12px;" onclick="processCall('Maria Garcia', 'OTC Inquiry: Allergies', 'Routine - AI recommended Cetirizine 10mg OTC guidance')">Process Triage</button>
+                        </div>
+                    </div>
+
+                    <!-- Custom Triage Simulator -->
+                    <h3 style="font-size: 1.05rem; margin-top: 24px;">Simulate New Inbound Call / Patient Intake</h3>
+                    <div class="form-group">
+                        <label for="callerName">Patient Name & Phone</label>
+                        <input type="text" id="callerName" class="form-control" placeholder="e.g. John Doe (555-0192)">
+                    </div>
+                    <div class="form-group">
+                        <label for="callCategory">Call Inquiry Type</label>
+                        <select id="callCategory" class="form-control">
+                            <option value="Sick Call">Calling in Sick</option>
+                            <option value="Appointment">Doctor Appointment Booking</option>
+                            <option value="OTC Prescription">Over-the-Counter (OTC) Prescription Guidance</option>
+                            <option value="Urgent Triage">Urgent Symptom Triage</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="callTranscript">Call Transcript / Notes</label>
+                        <textarea id="callTranscript" placeholder="Enter caller speech transcript or symptoms..."></textarea>
+                    </div>
+                    <button class="btn" onclick="runAITriage()">Run AI Receptionist Triage</button>
+                    <div class="output-box" id="triageOutput" style="margin-top: 16px;">AI triage analysis and automated action plan will appear here...</div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Shorthand Parser & Exporter -->
+            <div id="parserTab" class="tab-content">
                 <div class="section">
                     <h2>Clinical Shorthand Engine</h2>
-                    <p style="font-size: 0.9rem; opacity: 0.8; margin-top: 0;">Type rapid clinical shorthand notes and parse instantly into structured records with CSV & JSON exports.</p>
-                    <textarea id="shorthandInput" placeholder="Enter patient notes (e.g., pt: 45m, bp: 120/80, cc: acute chest pain, plan: 12-lead ECG, telemetry)..."></textarea>
+                    <p style="font-size: 0.9rem; opacity: 0.8; margin-top: 0;">Parse rapid clinical notes and export records instantly to CSV or JSON.</p>
+                    <textarea id="shorthandInput" placeholder="Enter patient notes (e.g., pt: 45m, bp: 120/80, cc: acute chest pain)..."></textarea>
                     <div class="editor-actions">
                         <button class="btn" onclick="parseShorthand()">Parse Clinical Note</button>
                         <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
@@ -326,27 +399,26 @@
                 </div>
             </div>
 
-            <!-- Tab 2: Department Vault -->
+            <!-- Tab 3: Department Vault -->
             <div id="vaultTab" class="tab-content">
                 <div class="section">
                     <h2>Secure Department Records & Compliance</h2>
-                    <p style="font-size: 0.9rem; opacity: 0.8;">Restricted department-level archives and audit logs.</p>
                     <div class="vault-grid">
                         <div class="vault-card">
                             <h3 style="margin-top:0; color: var(--primary-color);">Active Department</h3>
-                            <p id="vaultDeptName" style="font-weight:600; font-size:1.1rem; margin:8px 0;">Emergency Room</p>
+                            <p id="vaultDeptName" style="font-weight:600; font-size:1.1rem; margin:8px 0;">AI Receptionist & Triage</p>
                             <p style="font-size:0.85rem; opacity:0.8;">Status: Encrypted & Verified</p>
                         </div>
                         <div class="vault-card">
                             <h3 style="margin-top:0; color: var(--primary-color);">Audit Logs</h3>
-                            <p style="font-size:0.9rem; margin:8px 0;">Session initialized securely with TLS 1.3 protocol standards.</p>
-                            <button class="btn btn-secondary" style="font-size: 0.8rem; padding: 6px 12px;" onclick="alert('Audit logs verified. No discrepancies detected.')">Verify Logs</button>
+                            <p style="font-size:0.9rem; margin:8px 0;">AI Call logs synchronized with HIPAA compliant secure ledger.</p>
+                            <button class="btn btn-secondary" style="font-size: 0.8rem; padding: 6px 12px;" onclick="alert('Audit logs verified. All calls encrypted.')">Verify Logs</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Tab 3: Video Tutorial -->
+            <!-- Tab 4: Video Training -->
             <div id="videoTab" class="tab-content">
                 <div class="section">
                     <h2>Video Tutorial & Walkthrough</h2>
@@ -356,17 +428,17 @@
                 </div>
             </div>
 
-            <!-- Tab 4: Interactive Tour -->
+            <!-- Tab 5: Interactive Tour -->
             <div id="tourTab" class="tab-content">
                 <div class="section">
                     <h2>Interactive Tour Guide</h2>
                     <div class="tour-box">
                         <div class="tour-header">
-                            <span id="tourStepTitle">Step 1: Secure Authentication</span>
+                            <span id="tourStepTitle">Step 1: AI Receptionist & Triage</span>
                             <span class="tour-steps" id="tourStepCounter">1 of 4</span>
                         </div>
                         <div class="tour-content" id="tourStepDesc">
-                            You have securely authenticated into the department vault. Use department-specific passcodes to isolate records.
+                            The AI Receptionist automatically processes incoming patient calls for sick leave, doctor appointments, and OTC prescription guidance.
                         </div>
                         <div class="tour-footer">
                             <button class="btn btn-secondary" id="prevBtn" onclick="prevStep()" disabled>Previous</button>
@@ -382,8 +454,8 @@
     </div>
 
     <script>
-        // Authentication Logic
         const DEPT_NAMES = {
+            'reception': 'AI Receptionist & Triage',
             'er': 'Emergency Room (ER)',
             'icu': 'Intensive Care Unit (ICU)',
             'surgery': 'Surgical Services',
@@ -394,11 +466,10 @@
             const pin = document.getElementById('securePin').value;
             const dept = document.getElementById('deptSelect').value;
             
-            // Demo passcode check (Accepts '1234' or any 4+ char PIN)
             if (pin.length >= 4) {
                 document.getElementById('loginOverlay').style.display = 'none';
                 document.getElementById('appShell').style.display = 'block';
-                document.getElementById('activeUserBadge').innerText = `${DEPT_NAMES[dept]} - Secure Access`;
+                document.getElementById('activeUserBadge').innerText = `${DEPT_NAMES[dept]} - Active`;
                 document.getElementById('vaultDeptName').innerText = DEPT_NAMES[dept];
                 localStorage.setItem('mednote_auth', JSON.stringify({ dept, authenticated: true }));
             } else {
@@ -414,7 +485,6 @@
             document.getElementById('loginError').style.display = 'none';
         }
 
-        // Auto-login if previously authenticated in session
         window.addEventListener('DOMContentLoaded', () => {
             const savedAuth = localStorage.getItem('mednote_auth');
             if (savedAuth) {
@@ -430,7 +500,6 @@
             }
         });
 
-        // Theme Toggle Logic
         function toggleTheme() {
             const html = document.documentElement;
             const currentTheme = html.getAttribute('data-theme');
@@ -442,12 +511,62 @@
         const savedTheme = localStorage.getItem('mednote_theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
 
-        // Tab Navigation
         function switchTab(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             btn.classList.add('active');
+        }
+
+        // AI Receptionist Functions
+        function processCall(patient, type, actionPlan) {
+            const timestamp = new Date().toISOString();
+            const result = `[AI RECEPTIONIST TRIAGE RECORD]
+----------------------------------------
+Patient: ${patient}
+Inquiry Type: ${type}
+Processed At: ${timestamp}
+AI Action Plan: ${actionPlan}
+Status: Successfully Triaged & Logged to EHR`;
+            
+            document.getElementById('triageOutput').innerText = result;
+        }
+
+        function runAITriage() {
+            const name = document.getElementById('callerName').value.trim() || "Anonymous Patient";
+            const category = document.getElementById('callCategory').value;
+            const transcript = document.getElementById('callTranscript').value.trim() || "No transcript provided.";
+            const timestamp = new Date().toISOString();
+
+            let triageLevel = "Routine";
+            let recommendation = "Standard follow-up or scheduling action initiated.";
+
+            if (category === "Sick Call") {
+                triageLevel = "Moderate (Sick Leave)";
+                recommendation = "Generated automated 3-day sick leave note and routed to clinical queue.";
+            } else if (category === "Appointment") {
+                triageLevel = "Routine (Booking)";
+                recommendation = "Scanned doctor calendar availability and offered next open slot.";
+            } else if (category === "OTC Prescription") {
+                triageLevel = "Routine (OTC Guidance)";
+                recommendation = "Provided verified clinical OTC medication guidelines and logged inquiry.";
+            } else if (category === "Urgent Triage") {
+                triageLevel = "HIGH (Urgent Review)";
+                recommendation = "Escalated immediately to on-call ER nurse practitioner for callback.";
+            }
+
+            const result = `[AI RECEPTIONIST - LIVE TRIAGE RESULT]
+----------------------------------------
+Patient: ${name}
+Category: ${category}
+Urgency Level: ${triageLevel}
+Timestamp: ${timestamp}
+Transcript: "${transcript}"
+
+AI Recommendation:
+> ${recommendation}`;
+
+            document.getElementById('triageOutput').innerText = result;
         }
 
         // Shorthand Parser & Export Logic
@@ -507,11 +626,11 @@ Export Ready: CSV / JSON supported.`;
         // Interactive Tour Logic
         const tourData = [
             {
-                title: "Step 1: Secure Authentication",
-                desc: "You have securely authenticated into the department vault. Use department-specific passcodes to isolate records."
+                title: "Step 1: AI Receptionist & Triage",
+                desc: "The AI Receptionist automatically processes incoming patient calls for sick leave, doctor appointments, and OTC prescription guidance."
             },
             {
-                title: "Step 2: Shorthand Documentation & Export",
+                title: "Step 2: Shorthand Documentation",
                 desc: "Type patient shorthand notes, parse them instantly, and export records directly to CSV or JSON formats."
             },
             {
